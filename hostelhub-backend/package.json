@@ -30,13 +30,13 @@
     "qrcode": "^1.5.4",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
+    "mongodb-memory-server": "^11.2.0",
     "uuid": "^10.0.0",
     "winston": "^3.13.0"
   },
   "devDependencies": {
     "eslint": "^9.7.0",
     "jest": "^29.7.0",
-    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.4",
     "supertest": "^7.0.0"
   },
