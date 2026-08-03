@@ -456,6 +456,39 @@ async function fetchFeeSummary() {
   }
 }
 
+// Populate Vacant Beds Dropdown for Student Registration
+async function populateVacantBedsSelect() {
+  const select = document.getElementById('stuBedSelect');
+  if (!select) return;
+
+  try {
+    const res = await fetchAPI('/rooms');
+    const rooms = res.rooms || res.data || [];
+    
+    let optionsHTML = `<option value="">-- Select Vacant Room & Seat (Optional) --</option>`;
+    let vacantCount = 0;
+
+    rooms.forEach(r => {
+      if (r.beds) {
+        r.beds.forEach(b => {
+          if (b.status === 'vacant') {
+            vacantCount++;
+            optionsHTML += `<option value="${r._id}|${b._id}">Room ${r.roomNumber} — Bed ${b.bedNumber} (${r.roomType || 'Standard'} - ₹${r.rent}/mo)</option>`;
+          }
+        });
+      }
+    });
+
+    if (vacantCount === 0) {
+      select.innerHTML = `<option value="">No Vacant Seats Available (Create Rooms First)</option>`;
+    } else {
+      select.innerHTML = optionsHTML;
+    }
+  } catch (err) {
+    console.error('Failed to populate vacant beds', err);
+  }
+}
+
 // Handle Real Modal Actions
 async function handleCreateHostel(e) {
   e.preventDefault();
@@ -505,18 +538,43 @@ async function handleCreateRoom(e) {
   }
 }
 
+// Handle Student Creation with Room & Bed Assignment
 async function handleCreateStudent(e) {
   e.preventDefault();
   const name = document.getElementById('stuName').value;
   const email = document.getElementById('stuEmail').value;
   const phone = document.getElementById('stuPhone').value;
+  const bedValue = document.getElementById('stuBedSelect').value;
+  const emergencyPhone = document.getElementById('stuEmergencyContact').value;
   const password = document.getElementById('stuPassword').value;
 
+  let roomId = null;
+  let bedId = null;
+  if (bedValue && bedValue.includes('|')) {
+    const parts = bedValue.split('|');
+    roomId = parts[0];
+    bedId = parts[1];
+  }
+
+  const hostelId = userHostels.length > 0 ? userHostels[0]._id : null;
+
   try {
-    await fetchAPI('/auth/register', 'POST', { name, email, phone, role: 'student', password }, false);
-    showToast('Student registered successfully!', 'success');
+    await fetchAPI('/students', 'POST', {
+      name,
+      email,
+      phone,
+      password,
+      hostelId,
+      roomId,
+      bedId,
+      emergencyContact: { phone: emergencyPhone || phone }
+    });
+
+    showToast('Student registered & bed seat assigned successfully!', 'success');
     closeModal('addStudentModal');
+    loadOverview();
     fetchStudents();
+    fetchRooms();
   } catch (err) {
     showToast(err.message || 'Failed to register student', 'error');
   }

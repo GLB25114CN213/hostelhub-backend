@@ -461,7 +461,7 @@
   <div class="glass-modal-overlay" id="addStudentModal">
     <div class="glass-modal">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-user-plus text-emerald"></i> Register Student Account</h3>
+        <h3><i class="fa-solid fa-user-plus text-emerald"></i> Register Student & Assign Seat</h3>
         <button class="close-modal" onclick="closeModal('addStudentModal')">&times;</button>
       </div>
       <form onsubmit="handleCreateStudent(event)">
@@ -478,12 +478,22 @@
           <input type="text" id="stuPhone" class="input-glass" placeholder="9876543210" required>
         </div>
         <div class="form-group">
+          <label><i class="fa-solid fa-bed text-indigo"></i> Assign Room & Seat (Bed)</label>
+          <select id="stuBedSelect" class="input-glass">
+            <option value="">-- Select Vacant Room & Bed (Optional) --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Emergency Contact Phone</label>
+          <input type="text" id="stuEmergencyContact" class="input-glass" placeholder="9876543211">
+        </div>
+        <div class="form-group">
           <label>Password</label>
           <input type="password" id="stuPassword" class="input-glass" value="Password123" required>
         </div>
         <div class="modal-actions">
           <button type="button" class="btn-glass" onclick="closeModal('addStudentModal')">Cancel</button>
-          <button type="submit" class="btn-glow-primary">Register Student</button>
+          <button type="submit" class="btn-glow-primary">Register & Assign Bed</button>
         </div>
       </form>
     </div>

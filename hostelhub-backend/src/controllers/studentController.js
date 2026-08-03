@@ -34,9 +34,17 @@ exports.createStudent = async (req, res, next) => {
 
       const qrPayload = uuidv4();
       const qrImage = await QRCode.toDataURL(qrPayload);
-      const qrUpload = await cloudinary.uploader.upload(qrImage, {
-        folder: 'hostelhub/student-qr',
-      });
+      let qrUrl = qrImage;
+      try {
+        if (process.env.CLOUDINARY_CLOUD_NAME) {
+          const qrUpload = await cloudinary.uploader.upload(qrImage, {
+            folder: 'hostelhub/student-qr',
+          });
+          qrUrl = qrUpload.secure_url;
+        }
+      } catch (e) {
+        qrUrl = qrImage;
+      }
 
       const student = await Student.create(
         [
@@ -45,7 +53,7 @@ exports.createStudent = async (req, res, next) => {
             hostel: req.user.hostel || req.body.hostelId,
             room: roomId || null,
             bed: bedId || null,
-            qrCode: qrUpload.secure_url,
+            qrCode: qrUrl,
             ...profileFields,
           },
         ],
