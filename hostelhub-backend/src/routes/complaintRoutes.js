@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-router.post('/', authorize('student'), complaintController.createComplaint);
+router.post('/', authorize('owner', 'warden', 'student'), complaintController.createComplaint);
 router.get('/', authorize('owner', 'warden', 'student'), complaintController.listComplaints);
 router.patch('/:id/assign', authorize('owner', 'warden'), complaintController.assignComplaint);
 router.patch('/:id/status', authorize('owner', 'warden'), complaintController.updateComplaintStatus);
