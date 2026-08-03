@@ -6,43 +6,59 @@ const logger = require('./logger');
 const connectDB = require('../config/db');
 
 async function seedData() {
-  const count = await User.countDocuments();
-  if (count > 0) {
-    logger.info('Database already seeded.');
-    return;
+  logger.info('Ensuring Owner and Warden accounts exist...');
+
+  // Ensure Owner Account
+  let owner = await User.findOne({ role: 'owner' });
+  if (!owner) {
+    owner = await User.create({
+      name: 'adminculture',
+      email: 'adminculture@hostelhub.com',
+      phone: '9990001111',
+      passwordHash: 'culhostel%7875',
+      role: 'owner',
+      status: 'active',
+    });
+  } else {
+    owner.name = 'adminculture';
+    owner.email = 'adminculture@hostelhub.com';
+    owner.passwordHash = 'culhostel%7875';
+    await owner.save();
   }
 
-  logger.info('Seeding initial demo data...');
+  // Ensure Hostel
+  let hostel = await Hostel.findOne({ owner: owner._id });
+  if (!hostel) {
+    hostel = await Hostel.create({
+      name: 'Primary Hostel Branch',
+      owner: owner._id,
+      address: { line1: 'Main Campus Road', city: 'City Center', state: 'State', pincode: '110001' },
+      contactNumber: '9990001111',
+      amenities: ['WiFi', 'Laundry', 'Mess', '24x7 Water'],
+      genderPolicy: 'co-ed',
+    });
+    owner.ownedHostels = [hostel._id];
+    await owner.save();
+  }
 
-  const owner = await User.create({
-    name: 'Demo Owner',
-    email: 'owner@hostelhub.demo',
-    phone: '9990001111',
-    passwordHash: 'Password123',
-    role: 'owner',
-    status: 'active',
-  });
-
-  const hostel = await Hostel.create({
-    name: 'Demo Hostel - Greater Noida',
-    owner: owner._id,
-    address: { line1: 'Knowledge Park III', city: 'Greater Noida', state: 'UP', pincode: '201310' },
-    contactNumber: '9990001111',
-    amenities: ['WiFi', 'Laundry', 'Mess', '24x7 Water'],
-    genderPolicy: 'co-ed',
-  });
-
-  owner.ownedHostels.push(hostel._id);
-  await owner.save();
-
-  const warden = await User.create({
-    name: 'Demo Warden',
-    email: 'warden@hostelhub.demo',
-    passwordHash: 'Password123',
-    role: 'warden',
-    status: 'active',
-    hostel: hostel._id,
-  });
+  // Ensure Warden Account
+  let warden = await User.findOne({ role: 'warden' });
+  if (!warden) {
+    warden = await User.create({
+      name: 'wardenhostel',
+      email: 'wardenhostel@hostelhub.com',
+      phone: '9990002222',
+      passwordHash: 'wargaurav%1981',
+      role: 'warden',
+      status: 'active',
+      hostel: hostel._id,
+    });
+  } else {
+    warden.name = 'wardenhostel';
+    warden.email = 'wardenhostel@hostelhub.com';
+    warden.passwordHash = 'wargaurav%1981';
+    await warden.save();
+  }
 
   const accountant = await User.create({
     name: 'Demo Accountant',

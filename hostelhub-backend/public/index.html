@@ -36,23 +36,23 @@
         </div>
       </div>
 
-      <div class="auth-tabs">
-        <button id="tabLoginBtn" class="auth-tab-btn active" onclick="switchAuthTab('login')">Sign In</button>
-        <button id="tabRegisterBtn" class="auth-tab-btn" onclick="switchAuthTab('register')">Register Real Account</button>
+      <div class="text-center my-4" style="margin: 16px 0;">
+        <h3 style="font-size:18px; font-weight:700; color:var(--text-main);">Sign In to Account</h3>
+        <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Enter your Owner or Warden credentials to access dashboard</p>
       </div>
 
       <!-- LOGIN FORM -->
       <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label><i class="fa-solid fa-envelope text-indigo"></i> Email or Phone</label>
-          <input type="text" id="loginIdentifier" class="input-glass" placeholder="e.g. owner@hostelhub.demo" required>
+          <label><i class="fa-solid fa-user text-indigo"></i> Username / Email</label>
+          <input type="text" id="loginIdentifier" class="input-glass" placeholder="e.g. adminculture or wardenhostel" required>
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-lock text-purple"></i> Password</label>
           <input type="password" id="loginPassword" class="input-glass" placeholder="••••••••" required>
         </div>
         <button type="submit" class="btn-glow-primary w-full py-3">
-          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Account
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In to Dashboard
         </button>
       </form>
 

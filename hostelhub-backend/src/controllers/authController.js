@@ -66,7 +66,7 @@ exports.login = async (req, res, next) => {
     const { identifier, password } = req.body; // identifier = email or phone
 
     const user = await User.findOne({
-      $or: [{ email: identifier }, { phone: identifier }],
+      $or: [{ email: identifier }, { phone: identifier }, { name: identifier }],
     }).select('+passwordHash');
 
     if (!user || !user.passwordHash) throw ApiError.unauthorized('Invalid credentials');
