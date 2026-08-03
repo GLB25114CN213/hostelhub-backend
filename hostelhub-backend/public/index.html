@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HostelHub AI — Glassmorphism Dashboard</title>
+
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+  <!-- Ambient Glowing Background Orbs -->
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+  <div class="bg-orb orb-4"></div>
+
+  <div class="app-layout">
+    
+    <!-- Glassmorphic Sidebar -->
+    <aside class="glass-sidebar">
+      <div class="brand-header">
+        <div class="logo-icon">
+          <i class="fa-solid fa-building-user"></i>
+        </div>
+        <div class="brand-text">
+          <h2>HostelHub<span>AI</span></h2>
+          <span class="badge-v1">PRO V1.0</span>
+        </div>
+      </div>
+
+      <!-- Quick User Account Switcher -->
+      <div class="user-card-glass" id="userCard">
+        <div class="avatar-glow">
+          <i class="fa-solid fa-user-shield"></i>
+        </div>
+        <div class="user-details">
+          <h4 id="userName">Demo Owner</h4>
+          <span class="user-role-badge" id="userRole">OWNER</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#overview" class="nav-item active" data-tab="overview">
+          <i class="fa-solid fa-chart-pie"></i> Overview Dashboard
+        </a>
+        <a href="#hostels" class="nav-item" data-tab="hostels">
+          <i class="fa-solid fa-hotel"></i> Hostels & Rooms
+        </a>
+        <a href="#students" class="nav-item" data-tab="students">
+          <i class="fa-solid fa-user-graduate"></i> Student Roster
+        </a>
+        <a href="#attendance" class="nav-item" data-tab="attendance">
+          <i class="fa-solid fa-calendar-check"></i> Attendance Tracker
+        </a>
+        <a href="#complaints" class="nav-item" data-tab="complaints">
+          <i class="fa-solid fa-triangle-exclamation"></i> Complaints
+        </a>
+        <a href="#fees" class="nav-item" data-tab="fees">
+          <i class="fa-solid fa-file-invoice-dollar"></i> Fees & Payments
+        </a>
+        <a href="/api-docs" target="_blank" class="nav-item swagger-link">
+          <i class="fa-solid fa-code"></i> OpenAPI Docs <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="server-status-pill">
+          <span class="pulse-dot"></span>
+          <span>API Connected (Port 5000)</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Glass Content Container -->
+    <main class="main-content">
+      
+      <!-- Top Glass Navbar -->
+      <header class="glass-header">
+        <div class="header-title">
+          <h1 id="pageTitle">Hostel Overview Dashboard</h1>
+          <p class="subtitle" id="pageSubtitle">Real-time occupancy, student allocation, and financial analytics</p>
+        </div>
+
+        <div class="header-actions">
+          <div class="quick-login-buttons">
+            <span class="label-text">Quick Login:</span>
+            <button class="btn-glass-sm active" onclick="switchLogin('owner@hostelhub.demo')">
+              <i class="fa-solid fa-crown"></i> Owner
+            </button>
+            <button class="btn-glass-sm" onclick="switchLogin('warden@hostelhub.demo')">
+              <i class="fa-solid fa-user-tie"></i> Warden
+            </button>
+            <button class="btn-glass-sm" onclick="switchLogin('accountant@hostelhub.demo')">
+              <i class="fa-solid fa-calculator"></i> Accountant
+            </button>
+          </div>
+          <button class="btn-glow-primary" onclick="openModal('addStudentModal')">
+            <i class="fa-solid fa-plus"></i> Add Student
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: OVERVIEW DASHBOARD -->
+      <section id="tab-overview" class="tab-content active">
+        <!-- Glass Metrics Grid -->
+        <div class="metrics-grid">
+          <div class="glass-card metric-card card-indigo">
+            <div class="metric-icon"><i class="fa-solid fa-city"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Managed Hostels</span>
+              <h3 id="statHostels">1</h3>
+              <span class="trend-text text-emerald"><i class="fa-solid fa-check"></i> Greater Noida Branch</span>
+            </div>
+          </div>
+
+          <div class="glass-card metric-card card-purple">
+            <div class="metric-icon"><i class="fa-solid fa-bed"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Total Beds & Occupancy</span>
+              <h3 id="statBeds">2 Beds</h3>
+              <span class="trend-text text-amber"><i class="fa-solid fa-door-open"></i> 100% Vacant</span>
+            </div>
+          </div>
+
+          <div class="glass-card metric-card card-emerald">
+            <div class="metric-icon"><i class="fa-solid fa-users"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Total Registered Students</span>
+              <h3 id="statStudents">3 Students</h3>
+              <span class="trend-text text-emerald"><i class="fa-solid fa-user-check"></i> All Accounts Active</span>
+            </div>
+          </div>
+
+          <div class="glass-card metric-card card-rose">
+            <div class="metric-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="metric-info">
+              <span class="metric-label">Open Complaints</span>
+              <h3 id="statComplaints">0 Active</h3>
+              <span class="trend-text text-emerald"><i class="fa-solid fa-shield-halved"></i> All Resolved</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Glass Detail Sections -->
+        <div class="dashboard-row">
+          <!-- Hostel Profile Card -->
+          <div class="glass-card col-span-2">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-hotel text-indigo"></i> Primary Hostel Overview</h3>
+              <span class="badge-glass">Co-Ed Hostel</span>
+            </div>
+            <div class="hostel-preview-body" id="hostelOverviewBox">
+              <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Hostel Details...</div>
+            </div>
+          </div>
+
+          <!-- Quick Actions & System Info -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h3><i class="fa-solid fa-bolt text-amber"></i> Quick Actions</h3>
+            </div>
+            <div class="quick-actions-list">
+              <button class="action-item-glass" onclick="switchTab('hostels')">
+                <i class="fa-solid fa-door-open text-purple"></i>
+                <div>
+                  <strong>View Rooms Grid</strong>
+                  <p>Check room capacities & bed status</p>
+                </div>
+              </button>
+              <button class="action-item-glass" onclick="switchTab('attendance')">
+                <i class="fa-solid fa-clipboard-user text-emerald"></i>
+                <div>
+                  <strong>Mark Attendance</strong>
+                  <p>Record daily student entry & exit</p>
+                </div>
+              </button>
+              <button class="action-item-glass" onclick="switchTab('fees')">
+                <i class="fa-solid fa-receipt text-cyan"></i>
+                <div>
+                  <strong>Generate Invoices</strong>
+                  <p>View student rent statements</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: HOSTELS & ROOMS -->
+      <section id="tab-hostels" class="tab-content">
+        <div class="glass-card">
+          <div class="card-header flex-between">
+            <div>
+              <h3><i class="fa-solid fa-door-closed text-purple"></i> Rooms & Bed Allocations</h3>
+              <p class="subtitle">Real-time computed bed occupancy from Bed documents</p>
+            </div>
+            <button class="btn-glass-sm" onclick="fetchRooms()">
+              <i class="fa-solid fa-rotate"></i> Refresh Grid
+            </button>
+          </div>
+          <div class="rooms-grid" id="roomsGrid">
+            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Rooms...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: STUDENT ROSTER -->
+      <section id="tab-students" class="tab-content">
+        <div class="glass-card">
+          <div class="card-header flex-between">
+            <div>
+              <h3><i class="fa-solid fa-user-graduate text-emerald"></i> Registered Students Roster</h3>
+              <p class="subtitle">Manage hostel residents, emergency contacts, and assigned beds</p>
+            </div>
+            <button class="btn-glow-primary" onclick="openModal('addStudentModal')">
+              <i class="fa-solid fa-user-plus"></i> New Student
+            </button>
+          </div>
+
+          <div class="glass-table-wrapper">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Contact Info</th>
+                  <th>Hostel</th>
+                  <th>Assigned Room / Bed</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="studentsTableBody">
+                <tr><td colspan="6" class="text-center py-4"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Students...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: ATTENDANCE TRACKER -->
+      <section id="tab-attendance" class="tab-content">
+        <div class="glass-card">
+          <div class="card-header flex-between">
+            <div>
+              <h3><i class="fa-solid fa-calendar-check text-emerald"></i> Daily Attendance Tracker</h3>
+              <p class="subtitle">Mark daily attendance and identify at-risk students</p>
+            </div>
+            <input type="date" id="attendanceDate" class="input-glass-sm" value="">
+          </div>
+
+          <div class="glass-table-wrapper">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Student Name</th>
+                  <th>Email</th>
+                  <th>Status for Selected Date</th>
+                  <th>Quick Mark Action</th>
+                </tr>
+              </thead>
+              <tbody id="attendanceTableBody">
+                <tr><td colspan="4" class="text-center py-4"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Attendance List...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 5: COMPLAINTS -->
+      <section id="tab-complaints" class="tab-content">
+        <div class="glass-card">
+          <div class="card-header flex-between">
+            <div>
+              <h3><i class="fa-solid fa-triangle-exclamation text-rose"></i> Complaint Management Pipeline</h3>
+              <p class="subtitle">Track category, priority, and status threads</p>
+            </div>
+            <button class="btn-glass-sm" onclick="openModal('addComplaintModal')">
+              <i class="fa-solid fa-plus"></i> File Complaint
+            </button>
+          </div>
+
+          <div class="complaints-list" id="complaintsList">
+            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Complaints...</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 6: FEES & PAYMENTS -->
+      <section id="tab-fees" class="tab-content">
+        <div class="glass-card">
+          <div class="card-header flex-between">
+            <div>
+              <h3><i class="fa-solid fa-receipt text-cyan"></i> Fee Summary & Invoices</h3>
+              <p class="subtitle">Track rent invoices and generate payment receipts</p>
+            </div>
+            <button class="btn-glass-sm" onclick="fetchFeeSummary()">
+              <i class="fa-solid fa-rotate"></i> Refresh Summary
+            </button>
+          </div>
+
+          <div class="fee-summary-container" id="feeSummaryBox">
+            <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading Fee Summary...</div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- GLASS MODAL: ADD STUDENT -->
+  <div class="glass-modal-overlay" id="addStudentModal">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-plus text-emerald"></i> Add New Student</h3>
+        <button class="close-modal" onclick="closeModal('addStudentModal')">&times;</button>
+      </div>
+      <form id="addStudentForm" onsubmit="handleCreateStudent(event)">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="stuName" class="input-glass" placeholder="e.g. Rahul Sharma" required>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="stuEmail" class="input-glass" placeholder="rahul@example.com" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="stuPhone" class="input-glass" placeholder="9876543210" required>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="stuPassword" class="input-glass" value="Password123" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-glass" onclick="closeModal('addStudentModal')">Cancel</button>
+          <button type="submit" class="btn-glow-primary">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- GLASS MODAL: FILE COMPLAINT -->
+  <div class="glass-modal-overlay" id="addComplaintModal">
+    <div class="glass-modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-triangle-exclamation text-rose"></i> File New Complaint</h3>
+        <button class="close-modal" onclick="closeModal('addComplaintModal')">&times;</button>
+      </div>
+      <form id="addComplaintForm" onsubmit="handleCreateComplaint(event)">
+        <div class="form-group">
+          <label>Title</label>
+          <input type="text" id="compTitle" class="input-glass" placeholder="e.g. AC Fan not working" required>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="compCategory" class="input-glass">
+            <option value="electrical">Electrical</option>
+            <option value="plumbing">Plumbing</option>
+            <option value="cleanliness">Cleanliness</option>
+            <option value="wifi">Wi-Fi / Internet</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="compPriority" class="input-glass">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="emergency">Emergency</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Description</label>
+          <textarea id="compDesc" class="input-glass" rows="3" placeholder="Explain the issue..." required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-glass" onclick="closeModal('addComplaintModal')">Cancel</button>
+          <button type="submit" class="btn-glow-primary">Submit Complaint</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
