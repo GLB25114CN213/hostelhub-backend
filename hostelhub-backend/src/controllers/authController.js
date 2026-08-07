@@ -1,147 +1,66 @@
 const User = require('../models/User');
 const ApiError = require('../utils/ApiError');
+const asyncHandler = require('../utils/asyncHandler');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/token');
 
-const REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days
+const REFRESH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000;
 
 const issueTokenPair = async (user, deviceInfo = 'unknown') => {
   const accessToken = generateAccessToken(user);
   const { token: refreshToken, jti } = generateRefreshToken(user);
 
-  user.refreshTokens.push({
-    token: jti,
-    deviceInfo,
-    expiresAt: new Date(Date.now() + REFRESH_COOKIE_MAX_AGE),
-  });
-  // Cap stored sessions per user to avoid unbounded growth
-  if (user.refreshTokens.length > 10) {
-    user.refreshTokens = user.refreshTokens.slice(-10);
-  }
+  user.refreshTokens.push({ token: jti, deviceInfo, expiresAt: new Date(Date.now() + REFRESH_COOKIE_MAX_AGE) });
+  if (user.refreshTokens.length > 10) user.refreshTokens = user.refreshTokens.slice(-10);
   await user.save();
 
   return { accessToken, refreshToken };
 };
 
-/**
- * POST /api/v1/auth/register
- * Registers a new user. Role defaults to 'student' unless created by an owner
- * (owner-created warden/accountant accounts go through a separate admin-only route).
- */
-exports.register = async (req, res, next) => {
-  try {
-    const { name, email, phone, password } = req.body;
+exports.register = asyncHandler(async (req, res) => {
+  const { name, email, phone, password } = req.body;
+  if (await User.findOne({ $or: [{ email }, { phone }] })) throw ApiError.conflict('Account already exists');
 
-    const existing = await User.findOne({ $or: [{ email }, { phone }] });
-    if (existing) throw ApiError.conflict('An account with this email or phone already exists');
+  const user = await User.create({ name, email, phone, passwordHash: password, role: 'student', status: 'pending_verification' });
+  const tokens = await issueTokenPair(user, req.headers['user-agent']);
 
-    const user = await User.create({
-      name,
-      email,
-      phone,
-      passwordHash: password,
-      role: 'student',
-      status: 'pending_verification',
-    });
+  res.status(201).json({ success: true, message: 'Account created', user: user.toSafeJSON(), ...tokens });
+});
 
-    // In production: trigger OTP send here (email/phone) before marking verified.
-    const tokens = await issueTokenPair(user, req.headers['user-agent']);
+exports.login = asyncHandler(async (req, res) => {
+  const { identifier, password } = req.body;
+  const user = await User.findOne({ $or: [{ email: identifier }, { phone: identifier }, { name: identifier }] }).select('+passwordHash');
 
-    res.status(201).json({
-      success: true,
-      message: 'Account created. Please verify your phone/email.',
-      user: user.toSafeJSON(),
-      ...tokens,
-    });
-  } catch (err) {
-    next(err);
-  }
-};
+  if (!user?.passwordHash || !(await user.comparePassword(password))) throw ApiError.unauthorized('Invalid credentials');
+  if (user.status === 'suspended') throw ApiError.forbidden('Account has been suspended');
 
-/**
- * POST /api/v1/auth/login
- * Email/phone + password login.
- */
-exports.login = async (req, res, next) => {
-  try {
-    const { identifier, password } = req.body; // identifier = email or phone
+  user.lastLoginAt = new Date();
+  const tokens = await issueTokenPair(user, req.headers['user-agent']);
+  res.json({ success: true, user: user.toSafeJSON(), ...tokens });
+});
 
-    const user = await User.findOne({
-      $or: [{ email: identifier }, { phone: identifier }, { name: identifier }],
-    }).select('+passwordHash');
+exports.refresh = asyncHandler(async (req, res) => {
+  const { refreshToken } = req.body;
+  if (!refreshToken) throw ApiError.unauthorized('Refresh token required');
 
-    if (!user || !user.passwordHash) throw ApiError.unauthorized('Invalid credentials');
-    if (user.status === 'suspended') throw ApiError.forbidden('Account has been suspended');
+  let payload;
+  try { payload = verifyRefreshToken(refreshToken); } catch { throw ApiError.unauthorized('Invalid refresh token'); }
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) throw ApiError.unauthorized('Invalid credentials');
+  const user = await User.findById(payload.sub);
+  if (!user?.refreshTokens.some((rt) => rt.token === payload.jti)) throw ApiError.unauthorized('Session revoked');
 
-    user.lastLoginAt = new Date();
-    const tokens = await issueTokenPair(user, req.headers['user-agent']);
+  user.refreshTokens = user.refreshTokens.filter((rt) => rt.token !== payload.jti);
+  const tokens = await issueTokenPair(user, req.headers['user-agent']);
+  res.json({ success: true, ...tokens });
+});
 
-    res.json({ success: true, user: user.toSafeJSON(), ...tokens });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * POST /api/v1/auth/refresh
- * Exchanges a valid refresh token for a new access token (rotation).
- */
-exports.refresh = async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-    if (!refreshToken) throw ApiError.unauthorized('Refresh token required');
-
-    let payload;
+exports.logout = asyncHandler(async (req, res) => {
+  if (req.body.refreshToken) {
     try {
-      payload = verifyRefreshToken(refreshToken);
-    } catch {
-      throw ApiError.unauthorized('Invalid or expired refresh token');
-    }
-
-    const user = await User.findById(payload.sub);
-    if (!user) throw ApiError.unauthorized('User no longer exists');
-
-    const sessionExists = user.refreshTokens.some((rt) => rt.token === payload.jti);
-    if (!sessionExists) throw ApiError.unauthorized('Session has been revoked');
-
-    // Rotate: remove old, issue new
-    user.refreshTokens = user.refreshTokens.filter((rt) => rt.token !== payload.jti);
-    const tokens = await issueTokenPair(user, req.headers['user-agent']);
-
-    res.json({ success: true, ...tokens });
-  } catch (err) {
-    next(err);
+      const payload = verifyRefreshToken(req.body.refreshToken);
+      await User.findByIdAndUpdate(payload.sub, { $pull: { refreshTokens: { token: payload.jti } } });
+    } catch {}
   }
-};
+  res.json({ success: true, message: 'Logged out' });
+});
 
-/**
- * POST /api/v1/auth/logout
- * Revokes the provided refresh token (single-device logout).
- */
-exports.logout = async (req, res, next) => {
-  try {
-    const { refreshToken } = req.body;
-    if (refreshToken) {
-      try {
-        const payload = verifyRefreshToken(refreshToken);
-        await User.findByIdAndUpdate(payload.sub, {
-          $pull: { refreshTokens: { token: payload.jti } },
-        });
-      } catch {
-        // token already invalid/expired — nothing to revoke, treat as success
-      }
-    }
-    res.json({ success: true, message: 'Logged out' });
-  } catch (err) {
-    next(err);
-  }
-};
-
-/**
- * GET /api/v1/auth/me
- */
-exports.me = async (req, res) => {
-  res.json({ success: true, user: req.user.toSafeJSON ? req.user.toSafeJSON() : req.user });
-};
+exports.me = (req, res) => res.json({ success: true, user: req.user.toSafeJSON ? req.user.toSafeJSON() : req.user });
