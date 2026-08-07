@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -5,75 +6,54 @@ const compression = require('compression');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 
-const swaggerSpec = require('./config/swagger');
-const { errorConverter, errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const { errorConverter, errorHandler } = require('./middleware/errorHandler');
 
-const authRoutes = require('./routes/authRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const hostelRoutes = require('./routes/hostelRoutes');
-const roomRoutes = require('./routes/roomRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
-const leaveRoutes = require('./routes/leaveRoutes');
-const visitorRoutes = require('./routes/visitorRoutes');
-const complaintRoutes = require('./routes/complaintRoutes');
-const feeRoutes = require('./routes/feeRoutes');
-const inventoryRoutes = require('./routes/inventoryRoutes');
-const noticeRoutes = require('./routes/noticeRoutes');
-const emergencyRoutes = require('./routes/emergencyRoutes');
-// Remaining modules (AI features, reports/exports, OCR) are added the same way —
-// see README "Adding a new module".
+const routes = {
+  auth: require('./routes/authRoutes'),
+  students: require('./routes/studentRoutes'),
+  hostels: require('./routes/hostelRoutes'),
+  rooms: require('./routes/roomRoutes'),
+  attendance: require('./routes/attendanceRoutes'),
+  leaves: require('./routes/leaveRoutes'),
+  visitors: require('./routes/visitorRoutes'),
+  complaints: require('./routes/complaintRoutes'),
+  fees: require('./routes/feeRoutes'),
+  inventory: require('./routes/inventoryRoutes'),
+  notices: require('./routes/noticeRoutes'),
+  emergency: require('./routes/emergencyRoutes'),
+};
 
 const app = express();
 
-const path = require('path');
-
 app.use(helmet({ contentSecurityPolicy: false }));
-app.use(
-  cors({
-    origin: process.env.CLIENT_ORIGIN?.split(',') || '*',
-    credentials: true,
-  })
-);
+app.use(cors({ origin: process.env.CLIENT_ORIGIN?.split(',') || '*', credentials: true }));
 app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
-
-// Serve Glassmorphism Frontend Web Application
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(morgan('combined', { stream: { write: (msg) => logger.info(msg.trim()) } }));
 
 app.use(
-  morgan('combined', {
-    stream: { write: (msg) => logger.info(msg.trim()) },
+  '/api',
+  rateLimit({
+    windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
+    max: Number(process.env.RATE_LIMIT_MAX) || 200,
+    standardHeaders: true,
+    legacyHeaders: false,
   })
 );
 
-const globalLimiter = rateLimit({
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: Number(process.env.RATE_LIMIT_MAX) || 200,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', globalLimiter);
-
 app.get('/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
-const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerOptions = {
   definition: {
     openapi: '3.0.0',
-    info: {
-      title: 'HostelHub AI API',
-      version: '1.0.0',
-      description: 'REST API for the HostelHub AI multi-hostel management platform',
-    },
+    info: { title: 'HostelHub AI API', version: '1.0.0', description: 'REST API for HostelHub AI' },
     servers: [{ url: '/api/v1' }],
-    components: {
-      securitySchemes: {
-        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      },
-    },
+    components: { securitySchemes: { bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' } } },
     security: [{ bearerAuth: [] }],
   },
   apis: ['./src/routes/*.js', './hostelhub-backend/src/routes/*.js'],
@@ -95,29 +75,14 @@ const swaggerCss = `
 `;
 
 app.use('/api-docs', swaggerUi.serve, (req, res, next) => {
-  const spec = swaggerJsdoc(swaggerOptions);
-  swaggerUi.setup(spec, { customCss: swaggerCss, customSiteTitle: 'HostelHub AI - Glassmorphism Docs' })(req, res, next);
+  swaggerUi.setup(swaggerJsdoc(swaggerOptions), { customCss: swaggerCss, customSiteTitle: 'HostelHub AI - Glassmorphism Docs' })(req, res, next);
 });
 
 const v1 = express.Router();
-v1.use('/auth', authRoutes);
-v1.use('/students', studentRoutes);
-v1.use('/hostels', hostelRoutes);
-v1.use('/rooms', roomRoutes);
-v1.use('/attendance', attendanceRoutes);
-v1.use('/leaves', leaveRoutes);
-v1.use('/visitors', visitorRoutes);
-v1.use('/complaints', complaintRoutes);
-v1.use('/fees', feeRoutes);
-v1.use('/inventory', inventoryRoutes);
-v1.use('/notices', noticeRoutes);
-v1.use('/emergency', emergencyRoutes);
+Object.entries(routes).forEach(([path, router]) => v1.use(`/${path}`, router));
 app.use('/api/v1', v1);
 
-app.use((req, res, next) => {
-  res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
-});
-
+app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` }));
 app.use(errorConverter);
 app.use(errorHandler);
 
